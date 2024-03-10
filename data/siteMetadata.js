@@ -1,24 +1,19 @@
 /** @type {import("pliny/config").PlinyConfig } */
 const siteMetadata = {
-  title: 'Next.js Starter Blog',
-  author: 'Tails Azimuth',
-  headerTitle: 'TailwindBlog',
-  description: 'A blog created with Next.js and Tailwind.css',
+  title: "Abderrahim' thoughts!",
+  author: 'Abderrahim Alakouche',
+  headerTitle: '{AbderrahimAl}',
+  description: "Abderrahim' thoughts!",
   language: 'en-us',
-  theme: 'system', // system, dark or light
-  siteUrl: 'https://tailwind-nextjs-starter-blog.vercel.app',
-  siteRepo: 'https://github.com/timlrx/tailwind-nextjs-starter-blog',
-  siteLogo: '/static/images/logo.png',
-  socialBanner: '/static/images/twitter-card.png',
-  mastodon: 'https://mastodon.social/@mastodonuser',
-  email: 'address@yoursite.com',
-  github: 'https://github.com',
-  twitter: 'https://twitter.com/Twitter',
-  facebook: 'https://facebook.com',
-  youtube: 'https://youtube.com',
-  linkedin: 'https://www.linkedin.com',
-  threads: 'https://www.threads.net',
-  instagram: 'https://www.instagram.com',
+  theme: 'system', 
+  siteUrl: 'https://abderrahimal.vercel.app',
+  siteRepo: 'https://github.com/AbderrahimAl/Blog',
+  //siteLogo: '/static/images/logo.png',
+  socialBanner: '/static/images/card.jpg',
+  email: 'abderrahim.alakouche@gmail.com',
+  github: 'https://github.com/AbderrahimAl',
+  twitter: 'https://twitter.com/AbderrahimAl_',
+  linkedin: 'https://www.linkedin.com/in/abderrahim-alakouche/',
   locale: 'en-US',
   analytics: {
     // If you want to use an analytics provider you have to add it to the
@@ -80,7 +75,7 @@ const siteMetadata = {
   search: {
     provider: 'kbar', // kbar or algolia
     kbarConfig: {
-      searchDocumentsPath: 'search.json', // path to load documents to search
+      //searchDocumentsPath: 'search.json', // path to load documents to search
     },
     // provider: 'algolia',
     // algoliaConfig: {
