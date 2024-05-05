@@ -1,17 +1,16 @@
 ---
 title: Zero Shot Text Classification
-date: '2023-09-08'
+date: '2024-04-01'
 tags: ['ML', 'DL', 'Python']
 draft: false
 summary: Zero Shot Text Classification (ZSTC) Based on Natural Language Inference (NLI).
 ---
 
-## Background
 
 Due to its potential in real world applications, text data has attracted a lot of attention especially in the last decade, The field of Natural Language Processing (NLP) deals with problems related to this type of data. One such problem is text classification which is known as elephant among blind researchers because it accepts multiple alternate views and several solution strategies.
 The traditional approach to perform this task has been to simply train a machine learning model  to predict a label given a text. However, getting large quantities of high quality labeled data can be a difficult challenge that requires so much effort and processing.
 
-In 2019, a new language representation called BERT (Bedirectional Encoder Representation from Transformers) was introduced. The main idea behind this paradigm is to first pre-train a language model using a massive amount of unlabeled data then fine-tune all the parameters using labeled data from the downstream tasks. This allows the model to generalize well to different NLP tasks. Moreover, it has been shown that this language representation model can be used to solve downstream tasks without being explicitly trained on, e.g classify a text without training phase (Zero Shot Text Classification)
+In 2019, a new language representation called [BERT (Bedirectional Encoder Representation from Transformers)](https://arxiv.org/abs/1810.04805) was introduced. The main idea behind this paradigm is to first pre-train a language model using a massive amount of unlabeled data then fine-tune all the parameters using labeled data from the downstream tasks. This allows the model to generalize well to different NLP tasks. Moreover, it has been shown that this language representation model can be used to solve downstream tasks without being explicitly trained on, e.g classify a text without training phase.
 
 <div align="center">
 ![](/static/images/blog/1/00.gif)
@@ -20,26 +19,30 @@ In 2019, a new language representation called BERT (Bedirectional Encoder Repres
 
 In simple words, zero-shot text classification allows us to learn a classifier on one set of labels and then evaluate on a different set of labels that the classifier has never seen before. There are many approaches to tackle this problem: 
 
- • Latent Embedding approach
+ • [Latent Embedding approach](https://arxiv.org/abs/1603.08895)
 
- • Text Aware Representation of Sentence
+ • [Text Aware Representation of Sentence](https://aclanthology.org/2020.coling-main.285/)
 
- • Natural Language Inference.
+ • [Natural Language Inference](https://arxiv.org/abs/1909.00161)
 
 In this article we will be focusing on ZSTC based on Natural Language Inference (NLI).
 
 ## ZSTC based on NLI
-Natural Language Inference (NLI) is the task of determining whether a Hypothesis is true (entailment), false (contradiction), or undetermined (neutral) given a Premise. This can be adapted to the task of zero-shot text classification by treating the sequence which we want to classify as the premise and turning a candidate label into a hypothesis. If the model predicts that the constructed premise entails the hypothesis, then we can take that as a prediction that the label applies to the text. 
+Natural Language Inference (NLI) is the task of determining whether a Hypothesis is **<font color="green"> true </font>** (entailment), **<font color="red"> false </font>** (contradiction), or  **undetermined** (neutral) given a Premise. This can be adapted to the task of zero-shot text classification by treating the sequence which we want to classify as the premise and turning a candidate label into a hypothesis. If the model predicts that the constructed premise entails the hypothesis, then we can take that as a prediction that the label applies to the text. 
 
 Let’s say we want to classify the sentence `I turn coffee into code` if it is about coffee or not.
 
 <div align="center">
-Premise: I turn coffee into code
+**Premise**: I turn coffee into code.
 
-Candidate label: coffee
+**Candidate label**: coffee
 
-Hypothesis: This example is about coffee
+**Hypothesis**: This example is about coffee
+
+![](/static/images/blog/1/06.gif)
 </div>
+
+
 
 The Premise is always assigned to the sentence we want to classify. The Hypothesis needs a bit of creativity because it directly affects the quality of the predictions, usually we use `This example is about {candidate label}`. However, it is always good to make the hypothesis relevant to the topic we are trying to classify on e.g. in case we want to classify emotions we can change it to `This emotion is {candidate label}`. 
 <div align="center">
@@ -53,7 +56,7 @@ Now that we have a basic idea of how text classification can be used in conjunct
 
 #### Tokenization
 
-In this step we are taking the premise and the hypothesis and combining them as a sentence pair [**premise**, **hypothesis**], this sentence pair is fed into the model tokenizer to get the input ids.
+In this step we are taking the premise, the hypothesis and combining them as a sentence pair [**premise**, **hypothesis**], this sentence pair is fed into the model tokenizer to get the [input ids](https://huggingface.co/transformers/v3.2.0/glossary.html#input-ids).
 
 <div align="center">
 ![Tokenization](/static/images/blog/1/02.png)
@@ -87,7 +90,7 @@ Now that we have the numerical representation of our input tokens, we can run th
 </div>
 
 
-In this example we are trying to solve a binary classification problem so we need to drop neutral logits. In other words, an entailment corresponds to a positive example that belongs to the target class <font color="green"> coffee </font> and contradiction indicates a negative sample, <font color="red">not coffee</font>.
+In this example we are trying to solve a binary classification problem so we need to drop neutral logits. In other words, an entailment corresponds to a positive example that belongs to the target class **<font color="green"> coffee </font>** and contradiction indicates a negative sample, **<font color="red">not coffee</font>**.
 
 #### Softmax
 Before diving into the softmax block, let’s understand the main difference between	multi-class classification, multi-label classification and binary classification.
@@ -96,7 +99,7 @@ Before diving into the softmax block, let’s understand the main difference bet
 
     • Multi-label classification: each input can have multi-output classes.
 
-    • Binary classification: predicting one of two classes (<font color="green"> coffee </font>, <font color="red">not coffee</font>). 
+    • Binary classification: predicting one of two classes (**<font color="green"> coffee </font>**, **<font color="red">not coffee</font>**). 
 
 
 To tackle multi-class classification problems using the NLI approach, we need to softmax the entailments logits over all labels. Remember, in this type of classification we need to provide more than two classes and the output must be one class. This output will have the maximum entailment probability after applying the softmax.
@@ -112,7 +115,7 @@ Consider the same example `I turn coffee into code.`, but with multiple candidat
 <figcaption> Figure 4: NLI model logits.</figcaption>
 </div>
 
-For binary classification and multi-label classification we apply the activation function over the entailment vs contradiction for each label independently. In case of multi-label classification, there are two ways to limit the number of predicted classes for each input. Define the number of classes per prediction or the probability threshold. Both options are provided in ZSTC Node.
+For binary classification and multi-label classification we apply the activation function over the entailment vs contradiction for each label independently. In case of multi-label classification, there are two ways to limit the number of predicted classes for each input. Define the number of classes per prediction or the probability threshold.
 
 Returning to the output in figure 3, we are dropping neutral logits and applying the softmax. 
 
