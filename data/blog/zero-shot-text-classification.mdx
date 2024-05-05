@@ -3,5 +3,123 @@ title: Zero Shot Text Classification
 date: '2023-09-08'
 tags: ['ML', 'DL', 'Python']
 draft: false
-summary: Zero Shot Text Classification
+summary: Zero Shot Text Classification (ZSTC) Based on Natural Language Inference (NLI).
 ---
+
+## Background
+
+Due to its potential in real world applications, text data has attracted a lot of attention especially in the last decade, The field of Natural Language Processing (NLP) deals with problems related to this type of data. One such problem is text classification which is known as elephant among blind researchers because it accepts multiple alternate views and several solution strategies.
+The traditional approach to perform this task has been to simply train a machine learning model  to predict a label given a text. However, getting large quantities of high quality labeled data can be a difficult challenge that requires so much effort and processing.
+
+In 2019, a new language representation called BERT (Bedirectional Encoder Representation from Transformers) was introduced. The main idea behind this paradigm is to first pre-train a language model using a massive amount of unlabeled data then fine-tune all the parameters using labeled data from the downstream tasks. This allows the model to generalize well to different NLP tasks. Moreover, it has been shown that this language representation model can be used to solve downstream tasks without being explicitly trained on, e.g classify a text without training phase (Zero Shot Text Classification)
+
+<div align="center">
+![](/static/images/blog/1/00.gif)
+</div>
+## Zero Shot Text Classification (ZSTC)
+
+In simple words, zero-shot text classification allows us to learn a classifier on one set of labels and then evaluate on a different set of labels that the classifier has never seen before. There are many approaches to tackle this problem: 
+
+ • Latent Embedding approach
+
+ • Text Aware Representation of Sentence
+
+ • Natural Language Inference.
+
+In this article we will be focusing on ZSTC based on Natural Language Inference (NLI).
+
+## ZSTC based on NLI
+Natural Language Inference (NLI) is the task of determining whether a Hypothesis is true (entailment), false (contradiction), or undetermined (neutral) given a Premise. This can be adapted to the task of zero-shot text classification by treating the sequence which we want to classify as the premise and turning a candidate label into a hypothesis. If the model predicts that the constructed premise entails the hypothesis, then we can take that as a prediction that the label applies to the text. 
+
+Let’s say we want to classify the sentence `I turn coffee into code` if it is about coffee or not.
+
+<div align="center">
+Premise: I turn coffee into code
+
+Candidate label: coffee
+
+Hypothesis: This example is about coffee
+</div>
+
+The Premise is always assigned to the sentence we want to classify. The Hypothesis needs a bit of creativity because it directly affects the quality of the predictions, usually we use `This example is about {candidate label}`. However, it is always good to make the hypothesis relevant to the topic we are trying to classify on e.g. in case we want to classify emotions we can change it to `This emotion is {candidate label}`. 
+<div align="center">
+![ZSTC based on NLI architecture.](/static/images/blog/1/01.png)
+<figcaption> Figure 1: ZSTC based on NLI architecture.</figcaption>
+</div>
+
+## Under the hood
+
+Now that we have a basic idea of how text classification can be used in conjunction with NLI models to tackle the ZSTC problem, let's take a closer look at what's happening within the architecture shown in Figure 1.
+
+#### Tokenization
+
+In this step we are taking the premise and the hypothesis and combining them as a sentence pair [**premise**, **hypothesis**], this sentence pair is fed into the model tokenizer to get the input ids.
+
+<div align="center">
+![Tokenization](/static/images/blog/1/02.png)
+<figcaption> Figure 2: Tokenization.</figcaption>
+</div>
+
+The input ids are often the only required parameters to be passed to the model as input, they are the numerical representations of tokens building the sentence pair. Note that the tokenizer automatically deletes square brackets and adds special tokens which are special ids the model uses.				
+Let’s decode the previous input ids using Hugging Face Transformers library in Python to understand the differences.
+
+```shell
+
+>>> decoded_sequence = tokenizer.decode(input_ids)
+>>> print(decoded_sequence)
+
+<s> I turn coffee into code </s></s> This example is about coffee</s>
+```
+
+For this example, we are using [joeddav/xlm-roberta-large-xnli](https://huggingface.co/joeddav/xlm-roberta-large-xnli) model from Hugging face Hub. It is Roberta based model, the special tokens for this type of models tokenizer are:	
+ 
+    • `<s>`: bos_token - the beginning of the sequence token.	
+
+    • `</s>` : eos_token / sep_token - the end of sequence token or the separator token, in case we have multiple sentences.
+
+####  Model logits 
+
+Now that we have the numerical representation of our input tokens, we can run the NLI model to get the output. Since, this type of models are trained on a dataset of three possible labels (contradiction, neutral, entailment) the output contains three logits and considering we only have a batch of one sentence, the output must be an array of 1x3.
+
+<div align="center">
+![NLI model logits](/static/images/blog/1/03.png)
+<figcaption> Figure 3: NLI model logits.</figcaption>
+</div>
+
+
+In this example we are trying to solve a binary classification problem so we need to drop neutral logits. In other words, an entailment corresponds to a positive example that belongs to the target class <font color="green"> coffee </font> and contradiction indicates a negative sample, <font color="red">not coffee</font>.
+
+#### Softmax
+Before diving into the softmax block, let’s understand the main difference between	multi-class classification, multi-label classification and binary classification.
+
+    • Multi-class classification: predicting one of more than two classes.
+
+    • Multi-label classification: each input can have multi-output classes.
+
+    • Binary classification: predicting one of two classes (<font color="green"> coffee </font>, <font color="red">not coffee</font>). 
+
+
+To tackle multi-class classification problems using the NLI approach, we need to softmax the entailments logits over all labels. Remember, in this type of classification we need to provide more than two classes and the output must be one class. This output will have the maximum entailment probability after applying the softmax.
+
+Consider the same example `I turn coffee into code.`, but with multiple candidate labels.
+
+
+<div align='center'>
+**Premise : I turn coffee into code.**
+
+**Candidate labels : [sport, series, programming, life]**
+![Multi-class classification](/static/images/blog/1/04.png)
+<figcaption> Figure 4: NLI model logits.</figcaption>
+</div>
+
+For binary classification and multi-label classification we apply the activation function over the entailment vs contradiction for each label independently. In case of multi-label classification, there are two ways to limit the number of predicted classes for each input. Define the number of classes per prediction or the probability threshold. Both options are provided in ZSTC Node.
+
+Returning to the output in figure 3, we are dropping neutral logits and applying the softmax. 
+
+<div align='center'>
+![Binary classification](/static/images/blog/1/05.png)
+<figcaption> Figure 5: Binary classification</figcaption>
+</div>
+
+## Conclusion
+We can’t deny the limitations of zero-shot text classification. One such limitation is evaluation. By default, the input data is unlabeled, so we don’t have a ground truth to use for model evaluation. Solving this problem will be a huge success for the NLP community.
